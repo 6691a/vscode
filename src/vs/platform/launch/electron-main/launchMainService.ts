@@ -58,6 +58,15 @@ export class LaunchMainService implements ILaunchMainService {
 	async start(args: NativeParsedArgs, userEnv: IProcessEnvironment): Promise<void> {
 		this.logService.trace('Received data from other instance: ', args, userEnv);
 
+		// If named pipe was instantiated for the crashpad_handler process, reuse the same
+		// pipe for new app instances connecting to the original app instance.
+		// Ref: https://github.com/microsoft/vscode/issues/115874
+		if (process.env['CHROME_CRASHPAD_PIPE_NAME']) {
+			Object.assign(userEnv, {
+				CHROME_CRASHPAD_PIPE_NAME: process.env['CHROME_CRASHPAD_PIPE_NAME']
+			});
+		}
+
 		// macOS: Electron > 7.x changed its behaviour to not
 		// bring the application to the foreground when a window
 		// is focused programmatically. Only via `app.focus` and
